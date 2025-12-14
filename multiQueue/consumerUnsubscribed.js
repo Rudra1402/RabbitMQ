@@ -39,7 +39,8 @@ async function receiveEmail() {
             channel.ack(message);
         });
     } catch (error) {
-        
+        console.log("[ ERROR ] " + error.message);
+        return;
     }
 }
 
