@@ -5,11 +5,12 @@ const amqp = require("amqplib");
 // Globals ------------------------------------------->
 
 const RABBITMQ_URL = "amqp://localhost";
-const QUEUE_NAME_UNSUBSCRIBED = "email_queue_unsubscribed";
+const QUEUE_NAME = "orders_queue";
+const EXCHANGE_NAME = "ecommerce_exchange";
 
 // Methods ------------------------------------------->
 
-async function receiveEmail() {
+async function consumeFromQueue() {
     try {
         // Connect to amqp server
         const connection = await amqp.connect(RABBITMQ_URL);
@@ -25,17 +26,25 @@ async function receiveEmail() {
             return;
         }
 
-        // Assert queue
-        await channel.assertQueue(QUEUE_NAME_UNSUBSCRIBED, {
+        // Assert exchange
+        await channel.assertExchange(EXCHANGE_NAME, "topic", {
             durable: false
         });
 
-        channel.consume(QUEUE_NAME_UNSUBSCRIBED, (message) => {
+        // Assert queue
+        await channel.assertQueue(QUEUE_NAME, {
+            durable: false
+        });
+
+        // Bind queue with exchange
+        await channel.bindQueue(QUEUE_NAME, EXCHANGE_NAME, "order.*");
+
+        channel.consume(QUEUE_NAME, (message) => {
             if(!message || !message.content) {
-                console.log("[ ERROR ] Failed to consume messages from queue: " + QUEUE_NAME_UNSUBSCRIBED);
+                console.log("[ ERROR ] Failed to consume messages from queue: " + QUEUE_NAME);
                 return;
             }
-            console.log("[ INFO ] Successfully received data for unsubscribed users: " + message.content);
+            console.log("[ INFO ] Successfully received data: " + message.content);
             channel.ack(message);
         });
     } catch (error) {
@@ -44,4 +53,4 @@ async function receiveEmail() {
     }
 }
 
-receiveEmail();
+consumeFromQueue();
