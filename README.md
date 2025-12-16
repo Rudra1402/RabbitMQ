@@ -15,3 +15,9 @@ docker run -d --name rmq-local -p 5672:5672 -p 15672:15672 rabbitmq:management
 ```
 docker exec rmq-local rabbitmqctl version
 ```
+
+### 📚 Exchange Types Covered
+- Direct
+- Topic
+- Fanout
+- Headers
