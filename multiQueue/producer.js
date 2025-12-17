@@ -6,8 +6,6 @@ const amqp = require("amqplib");
 
 const RABBITMQ_URL = "amqp://localhost";
 const EXCHANGE_NAME = "email_exchange_one_to_many";
-const QUEUE_NAME_SUBSCRIBED = "email_queue_subscribed";
-const QUEUE_NAME_UNSUBSCRIBED = "email_queue_unsubscribed";
 const ROUTING_KEY_SUBSCRIBED = "routing_key_subscribed";
 const ROUTING_KEY_UNSUBSCRIBED = "routing_key_unsubscribed";
 
@@ -30,7 +28,7 @@ const payload = {
 
 // Methods ------------------------------------------->
 
-async function sendEmail() {
+async function sendEmail(routingKey) {
     try {
         // Connect to amqp server
         const connection = await amqp.connect(RABBITMQ_URL);
@@ -51,25 +49,8 @@ async function sendEmail() {
             durable: false
         });
 
-        // Assert queue -> Subscribed Users
-        await channel.assertQueue(QUEUE_NAME_SUBSCRIBED, {
-            durable: false
-        });
-
-         // Assert queue -> Unsubscribed Users
-        await channel.assertQueue(QUEUE_NAME_UNSUBSCRIBED, {
-            durable: false
-        });
-
-        // Bind queue with exchange -> Subscribed Users
-        await channel.bindQueue(QUEUE_NAME_SUBSCRIBED, EXCHANGE_NAME, ROUTING_KEY_SUBSCRIBED);
-
-        // Bind queue with exchange -> Unsubscribed Users
-        await channel.bindQueue(QUEUE_NAME_UNSUBSCRIBED, EXCHANGE_NAME, ROUTING_KEY_UNSUBSCRIBED);
-
-
         // Send data to queue via exchange
-        channel.publish(EXCHANGE_NAME, ROUTING_KEY_UNSUBSCRIBED, Buffer.from(JSON.stringify(payload)));
+        channel.publish(EXCHANGE_NAME, routingKey, Buffer.from(JSON.stringify(payload)));
         console.log("[ INFO ] Data published successfully to unsubscribed queue");
 
         // Close connection
@@ -82,4 +63,5 @@ async function sendEmail() {
     }
 }
 
-sendEmail();
+sendEmail(ROUTING_KEY_SUBSCRIBED);
+sendEmail(ROUTING_KEY_UNSUBSCRIBED);
