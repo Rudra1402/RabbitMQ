@@ -5,6 +5,8 @@ const amqp = require("amqplib");
 // Globals ------------------------------------------->
 
 const RABBITMQ_URL = "amqp://localhost";
+const EXCHANGE_NAME = "email_exchange_one_to_many";
+const ROUTING_KEY_UNSUBSCRIBED = "routing_key_unsubscribed";
 const QUEUE_NAME_UNSUBSCRIBED = "email_queue_unsubscribed";
 
 // Methods ------------------------------------------->
@@ -25,10 +27,18 @@ async function receiveEmail() {
             return;
         }
 
-        // Assert queue
+        // Assert exchange
+        await channel.assertExchange(EXCHANGE_NAME, "direct", {
+            durable: false
+        });
+
+         // Assert queue -> Unsubscribed Users
         await channel.assertQueue(QUEUE_NAME_UNSUBSCRIBED, {
             durable: false
         });
+
+        // Bind queue with exchange -> Unsubscribed Users
+        await channel.bindQueue(QUEUE_NAME_UNSUBSCRIBED, EXCHANGE_NAME, ROUTING_KEY_UNSUBSCRIBED);
 
         channel.consume(QUEUE_NAME_UNSUBSCRIBED, (message) => {
             if(!message || !message.content) {
