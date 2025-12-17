@@ -5,7 +5,9 @@ const amqp = require("amqplib");
 // Globals ------------------------------------------->
 
 const RABBITMQ_URL = "amqp://localhost";
+const EXCHANGE_NAME = "email_exchange";
 const QUEUE_NAME = "email_queue";
+const ROUTING_KEY = "routing_key";
 
 // Methods ------------------------------------------->
 
@@ -25,10 +27,18 @@ async function receiveEmail() {
             return;
         }
 
+        // Assert exchange
+        await channel.assertExchange(EXCHANGE_NAME, "topic", {
+            durable: false
+        });
+
         // Assert queue
         await channel.assertQueue(QUEUE_NAME, {
             durable: false
         });
+
+        // Bind queue with exchange
+        await channel.bindQueue(QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY);
 
         channel.consume(QUEUE_NAME, (message) => {
             if(!message || !message.content) {

@@ -6,7 +6,6 @@ const amqp = require("amqplib");
 
 const RABBITMQ_URL = "amqp://localhost";
 const EXCHANGE_NAME = "email_exchange";
-const QUEUE_NAME = "email_queue";
 const ROUTING_KEY = "routing_key";
 
 const payload = {
@@ -48,14 +47,6 @@ async function sendEmail() {
         await channel.assertExchange(EXCHANGE_NAME, "topic", {
             durable: false
         });
-
-        // Assert queue
-        await channel.assertQueue(QUEUE_NAME, {
-            durable: false
-        });
-
-        // Bind queue with exchange
-        await channel.bindQueue(QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY);
 
         // Send data to queue via exchange
         channel.publish(EXCHANGE_NAME, ROUTING_KEY, Buffer.from(JSON.stringify(payload)));
